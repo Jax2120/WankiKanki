@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>Settings</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260212_10" />
+  <link rel="stylesheet" href="/static/style.css?v=20260212_19" />
 </head>
-<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
+<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-reading: {{ theme_vars.wk_reading }}; --wk-meaning: {{ theme_vars.wk_meaning }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
   <header class="wk-header wk-splash-header">
     <div class="wk-topbar">
       <div class="wk-left">
@@ -27,6 +27,12 @@
         <label class="wk-settings-field">Header End
           <input id="colorPurple2" type="color" />
         </label>
+        <label class="wk-settings-field">Reading Prompt
+          <input id="colorReading" type="color" />
+        </label>
+        <label class="wk-settings-field">Meaning Prompt
+          <input id="colorMeaning" type="color" />
+        </label>
         <label class="wk-settings-field">Main Background
           <input id="colorGray" type="color" />
         </label>
@@ -44,6 +50,7 @@
           <select id="fontSelect" class="wk-deck-select">
             <option value="modern">Modern Sans</option>
             <option value="friendly">Friendly Sans</option>
+            <option value="noto">Noto Sans</option>
             <option value="book">Book Serif</option>
             <option value="clean">Clean Mono</option>
           </select>
