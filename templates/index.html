@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WaniKani-style Anki Review</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260212_10" />
+</head>
+<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
+  <header class="wk-header">
+    <div class="wk-topbar">
+      <div class="wk-left">
+        <a class="wk-back-link" href="/">Back</a>
+      </div>
+      <div class="wk-right">
+        <span id="remaining">-</span>
+      </div>
+    </div>
+
+    <div id="big" class="wk-big">-</div>
+  </header>
+
+  <main class="wk-main">
+    <div class="wk-subhead">
+      <span class="wk-type">Vocabulary</span>
+      <span class="wk-mode" id="mode">{{ study_mode or "Reviews" }}</span>
+      <span class="wk-deck-label" id="deckLabel">{{ deck_name or "" }}</span>
+    </div>
+
+    <div class="wk-progress">
+      <div id="bar" class="wk-bar"></div>
+    </div>
+
+    <section id="lessonStudy" class="wk-lesson-panel hidden">
+      <div class="wk-lesson-card">
+        <div class="wk-lesson-kicker">Lesson Preview</div>
+        <div id="lessonFront" class="wk-lesson-front">-</div>
+        <div class="wk-lesson-line">
+          <span class="wk-lesson-label">Reading</span>
+          <span id="lessonReading" class="wk-lesson-value">-</span>
+        </div>
+        <div class="wk-lesson-line">
+          <span class="wk-lesson-label">Meaning</span>
+          <span id="lessonMeaning" class="wk-lesson-value">-</span>
+        </div>
+      </div>
+
+      <div class="wk-lesson-actions">
+        <button id="lessonPrevBtn" class="wk-lesson-btn" type="button">Back</button>
+        <button id="lessonNextBtn" class="wk-lesson-btn" type="button">Next</button>
+        <button id="lessonQuizBtn" class="wk-lesson-btn wk-lesson-btn-primary hidden" type="button">Start Quiz</button>
+      </div>
+    </section>
+
+    <div class="wk-answer-row">
+      <input
+        id="answer"
+        type="text"
+        placeholder="Your Response"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <div class="wk-arrow">&rsaquo;</div>
+    </div>
+
+    <div id="resultStrip" class="wk-result hidden">
+      <div class="wk-result-text" id="resultText"></div>
+    </div>
+
+    <div id="expected" class="wk-expected hidden"></div>
+
+    <div id="hint" class="wk-hint hidden">
+      Press <b>Enter</b> to continue - <b>Backspace</b> or <b>Ctrl+Z</b> to retry
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/wanakana@5.3.1/wanakana.min.js"></script>
+  <script src="/static/app.js?v=20260212_3"></script>
+</body>
+</html>

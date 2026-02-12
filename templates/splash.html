@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WaniKani-style Splash</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260212_11" />
+</head>
+<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
+  <header class="wk-header wk-splash-header">
+    <div class="wk-topbar">
+      <div class="wk-left">
+        <a class="wk-back-link" href="/settings">Settings</a>
+      </div>
+      <div class="wk-right" id="splashDeckName">-</div>
+    </div>
+
+    <div class="wk-splash-title">WankiKanki</div>
+  </header>
+
+  <main class="wk-main wk-splash-main">
+    <section class="wk-tiles">
+      <a class="wk-tile wk-tile-lessons" href="/study/lessons">
+        <div class="wk-tile-label">Lessons</div>
+        <div class="wk-tile-count" id="lessonsCount">0</div>
+        <div class="wk-tile-sub">new cards available</div>
+      </a>
+
+      <a class="wk-tile wk-tile-reviews" href="/study/reviews">
+        <div class="wk-tile-label">Reviews</div>
+        <div class="wk-tile-count" id="reviewsCount">0</div>
+        <div class="wk-tile-sub">reviews remaining</div>
+      </a>
+    </section>
+
+    <section class="wk-deck-selector-wrap">
+      <label class="wk-deck-label-title" for="deckSelect">Deck Selector</label>
+      <select id="deckSelect" class="wk-deck-select"></select>
+      <p class="wk-deck-note">
+        Using a different deck? Keep fields compatible: <b>Front</b> (vocab), <b>Back</b> (reading, supports
+        kanji[kana]), and <b>Notes</b> (meaning list separated by commas, semicolons, or line breaks).
+      </p>
+      <button id="toggleDeckExamples" class="wk-example-toggle" type="button">Show card format examples</button>
+      <div id="deckExamples" class="wk-deck-note-example hidden">
+        <img
+          class="wk-deck-note-image"
+          src="/static/anki-fields-layout.png"
+          alt="Anki field layout example with Front, Back, and Notes fields"
+          onerror="this.style.display='none';document.getElementById('deckExamplesMissing')?.classList.remove('hidden');"
+        />
+        <img
+          class="wk-deck-note-image"
+          src="/static/anki-fields-example-filled.png"
+          alt="Filled Anki field example with Front, Back, and Notes values"
+          onerror="this.style.display='none';document.getElementById('deckExamplesMissing')?.classList.remove('hidden');"
+        />
+        <p id="deckExamplesMissing" class="wk-deck-missing hidden">
+          Example images not found. Add files to <code>static/</code>: <code>anki-fields-layout.png</code> and
+          <code>anki-fields-example-filled.png</code>.
+        </p>
+      </div>
+    </section>
+
+    <section id="ankiStatus" class="wk-api-gate hidden">
+      <h3 class="wk-api-title">AnkiConnect not detected</h3>
+      <p id="ankiStatusCopy" class="wk-api-copy">Follow the steps below, then refresh this page.</p>
+      <ol id="ankiSteps" class="wk-api-steps"></ol>
+      <p class="wk-api-copy">
+        Add-on page: <a href="https://ankiweb.net/shared/info/2055492159" target="_blank" rel="noreferrer">AnkiConnect (2055492159)</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="/static/splash.js?v=20260212_5"></script>
+</body>
+</html>
