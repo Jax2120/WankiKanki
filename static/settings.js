@@ -1,5 +1,7 @@
 const colorPurple = document.getElementById("colorPurple");
 const colorPurple2 = document.getElementById("colorPurple2");
+const colorReading = document.getElementById("colorReading");
+const colorMeaning = document.getElementById("colorMeaning");
 const colorGray = document.getElementById("colorGray");
 const colorGood = document.getElementById("colorGood");
 const colorBad = document.getElementById("colorBad");
@@ -17,6 +19,8 @@ function applySettingsToForm(settings) {
   const colors = settings.colors || {};
   colorPurple.value = colors.purple || "#9f00ee";
   colorPurple2.value = colors.purple2 || "#9f00ee";
+  colorReading.value = colors.reading || "#2aa9ff";
+  colorMeaning.value = colors.meaning || "#ff5f96";
   colorGray.value = colors.gray || "#e9e9e9";
   colorGood.value = colors.good || "#83c700";
   colorBad.value = colors.bad || "#ff0037";
@@ -28,6 +32,8 @@ function collectSettings() {
     colors: {
       purple: colorPurple.value,
       purple2: colorPurple2.value,
+      reading: colorReading.value,
+      meaning: colorMeaning.value,
       gray: colorGray.value,
       good: colorGood.value,
       bad: colorBad.value,
@@ -40,6 +46,8 @@ function applyPreview(settings) {
   const root = document.body;
   root.style.setProperty("--wk-purple", settings.colors.purple);
   root.style.setProperty("--wk-purple2", settings.colors.purple2);
+  root.style.setProperty("--wk-reading", settings.colors.reading);
+  root.style.setProperty("--wk-meaning", settings.colors.meaning);
   root.style.setProperty("--wk-gray", settings.colors.gray);
   root.style.setProperty("--wk-good", settings.colors.good);
   root.style.setProperty("--wk-bad", settings.colors.bad);
@@ -98,7 +106,7 @@ async function resetSettings() {
 saveSettingsBtn?.addEventListener("click", saveSettings);
 resetSettingsBtn?.addEventListener("click", resetSettings);
 
-for (const el of [colorPurple, colorPurple2, colorGray, colorGood, colorBad, fontSelect]) {
+for (const el of [colorPurple, colorPurple2, colorReading, colorMeaning, colorGray, colorGood, colorBad, fontSelect]) {
   el?.addEventListener("input", () => applyPreview(collectSettings()));
 }
 fontSelect?.addEventListener("change", () => applyPreview(collectSettings()));
