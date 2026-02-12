@@ -16,6 +16,9 @@ const resultText = document.getElementById("resultText");
 const expected = document.getElementById("expected");
 const hint = document.getElementById("hint");
 const deckLabel = document.getElementById("deckLabel");
+const notesToggle = document.getElementById("notesToggle");
+const notesPanel = document.getElementById("notesPanel");
+const notesContent = document.getElementById("notesContent");
 
 const lessonStudy = document.getElementById("lessonStudy");
 const lessonFront = document.getElementById("lessonFront");
@@ -28,6 +31,118 @@ const lessonQuizBtn = document.getElementById("lessonQuizBtn");
 function showHint(text) {
   hint.classList.remove("hidden");
   hint.textContent = text;
+}
+
+function escapeHtml(s) {
+  return (s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isKanji(ch) {
+  return /[\u3400-\u9fff々〆ヵヶ]/.test(ch || "");
+}
+
+function isKana(ch) {
+  return /[\u3040-\u30ffー]/.test(ch || "");
+}
+
+function toHiragana(s) {
+  return (s || "").replace(/[\u30a1-\u30f6]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0x60)
+  );
+}
+
+function setBigText(text) {
+  big.textContent = text || "-";
+}
+
+function setBigWithFurigana(front, readingKana) {
+  const f = (front || "").trim();
+  const r = toHiragana((readingKana || "").trim());
+  if (!f || !r) {
+    setBigText(f || "-");
+    return;
+  }
+
+  // Build ruby for mixed kanji/kana words by anchoring kana in reading.
+  const chars = [...f];
+  const out = [];
+  let i = 0;
+  let rIdx = 0;
+
+  while (i < chars.length) {
+    const ch = chars[i];
+    if (!isKanji(ch)) {
+      out.push(escapeHtml(ch));
+      const hk = toHiragana(ch);
+      if (r.slice(rIdx, rIdx + hk.length) === hk) {
+        rIdx += hk.length;
+      }
+      i += 1;
+      continue;
+    }
+
+    // Kanji run
+    const runStart = i;
+    while (i < chars.length && isKanji(chars[i])) i += 1;
+    const runText = chars.slice(runStart, i).join("");
+
+    // Next kana anchor in front
+    let anchor = "";
+    let j = i;
+    while (j < chars.length && !isKanji(chars[j])) {
+      anchor += chars[j];
+      j += 1;
+    }
+    const anchorH = toHiragana(anchor);
+
+    let rt = "";
+    if (!anchorH) {
+      rt = r.slice(rIdx);
+      rIdx = r.length;
+    } else {
+      const anchorPos = r.indexOf(anchorH, rIdx);
+      if (anchorPos >= 0) {
+        rt = r.slice(rIdx, anchorPos);
+        rIdx = anchorPos;
+      }
+    }
+
+    if (rt) {
+      out.push(`<ruby>${escapeHtml(runText)}<rt>${escapeHtml(rt)}</rt></ruby>`);
+    } else {
+      out.push(escapeHtml(runText));
+    }
+  }
+
+  big.innerHTML = out.join("") || escapeHtml(f);
+}
+
+function normalizeNotesHtml(raw) {
+  const text = (raw || "")
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, "");
+  const el = document.createElement("textarea");
+  el.innerHTML = text;
+  return (el.value || "").trim();
+}
+
+function setNotesVisible(visible) {
+  if (!notesPanel || !notesToggle) return;
+  notesPanel.classList.toggle("hidden", !visible);
+  notesToggle.setAttribute("aria-expanded", visible ? "true" : "false");
+}
+
+function loadNotesForCurrentCard() {
+  if (!notesContent || !notesToggle) return;
+  const notesText = normalizeNotesHtml(current?.notes || "");
+  notesContent.textContent = notesText || "(No notes on this card)";
+  notesToggle.classList.remove("hidden");
+  setNotesVisible(false);
 }
 
 function setProgress(rem, total, completed = 0) {
@@ -57,8 +172,15 @@ function setTheme(kind) {
   if (kind === "bad") document.body.classList.add("wk-bad");
 }
 
+function setPromptThemeClass(prompt) {
+  document.body.classList.remove("prompt-reading", "prompt-meaning");
+  if (prompt === "reading") document.body.classList.add("prompt-reading");
+  if (prompt === "meaning") document.body.classList.add("prompt-meaning");
+}
+
 function applyPromptUI(prompt) {
   currentPrompt = (prompt === "meaning") ? "meaning" : "reading";
+  setPromptThemeClass(currentPrompt);
   mode.textContent = currentPrompt === "reading" ? "Reading" : "Meaning";
   answer.placeholder = currentPrompt === "reading" ? "Your Response (kana)" : "Your Response";
 }
@@ -67,8 +189,11 @@ function setLessonStudyVisible(visible) {
   if (!lessonStudy) return;
   lessonStudy.classList.toggle("hidden", !visible);
   document.querySelector(".wk-answer-row")?.classList.toggle("hidden", visible);
+  notesToggle?.classList.toggle("hidden", visible);
+  notesPanel?.classList.add("hidden");
   expected.classList.toggle("hidden", true);
   if (visible) {
+    setPromptThemeClass(null);
     answer.disabled = true;
     answer.value = "";
   } else {
@@ -83,7 +208,7 @@ function renderLessonCard() {
   lessonReading.textContent = card.reading || "-";
   lessonMeaning.textContent = (card.meanings && card.meanings.length) ? card.meanings.join(", ") : "-";
 
-  big.textContent = card.front || "-";
+  setBigWithFurigana(card.front, card.readingKana || card.reading);
   mode.textContent = "Lessons";
 
   if (lessonPrevBtn) lessonPrevBtn.disabled = lessonIndex === 0;
@@ -140,7 +265,8 @@ async function loadCard() {
   if (data.done) {
     state = "question";
     setLessonStudyVisible(false);
-    big.textContent = "Done!";
+    setPromptThemeClass(null);
+    setBigText("Done!");
     answer.style.display = "none";
     setProgress(0, data.total || 0, data.completed || 0);
     return;
@@ -161,8 +287,9 @@ async function loadCard() {
 
   current = data.card;
   applyPromptUI(data.prompt);
+  loadNotesForCurrentCard();
 
-  big.textContent = current.front || "-";
+  setBigText(current.front || "-");
   setProgress(data.remaining, data.total, data.completed || 0);
 
   answer.style.display = "";
@@ -211,7 +338,7 @@ async function submit() {
     resultStrip.classList.add("bad");
     resultText.textContent = out.ideal || out.expected || "...";
     if (currentPrompt === "reading" && (out.ideal || out.expected)) {
-      big.textContent = out.ideal || out.expected;
+      setBigText(out.ideal || out.expected);
     }
     answer.classList.add("shake");
     setTheme("bad");
@@ -301,6 +428,11 @@ lessonNextBtn?.addEventListener("click", () => {
 
 lessonQuizBtn?.addEventListener("click", async () => {
   await startLessonQuiz();
+});
+
+notesToggle?.addEventListener("click", () => {
+  const isHidden = notesPanel?.classList.contains("hidden");
+  setNotesVisible(Boolean(isHidden));
 });
 
 loadCard();
