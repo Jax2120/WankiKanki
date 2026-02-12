@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>WaniKani-style Anki Review</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260212_10" />
+  <link rel="stylesheet" href="/static/style.css?v=20260212_19" />
 </head>
-<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
+<body class="font-{{ ui_settings.font }}" style="--wk-purple: {{ theme_vars.wk_purple }}; --wk-purple2: {{ theme_vars.wk_purple2 }}; --wk-reading: {{ theme_vars.wk_reading }}; --wk-meaning: {{ theme_vars.wk_meaning }}; --wk-gray: {{ theme_vars.wk_gray }}; --wk-good: {{ theme_vars.wk_good }}; --wk-bad: {{ theme_vars.wk_bad }};">
   <header class="wk-header">
     <div class="wk-topbar">
       <div class="wk-left">
@@ -63,6 +63,16 @@
       <div class="wk-arrow">&rsaquo;</div>
     </div>
 
+    <div class="wk-notes-tools">
+      <button id="notesToggle" class="wk-notes-toggle" type="button" aria-expanded="false" title="Show Notes">
+        &#128065; Notes
+      </button>
+    </div>
+
+    <div id="notesPanel" class="wk-notes-panel hidden">
+      <div id="notesContent" class="wk-notes-content"></div>
+    </div>
+
     <div id="resultStrip" class="wk-result hidden">
       <div class="wk-result-text" id="resultText"></div>
     </div>
@@ -75,6 +85,6 @@
   </main>
 
   <script src="https://unpkg.com/wanakana@5.3.1/wanakana.min.js"></script>
-  <script src="/static/app.js?v=20260212_3"></script>
+  <script src="/static/app.js?v=20260212_9"></script>
 </body>
 </html>
