@@ -12,6 +12,8 @@ DEFAULT_UI_SETTINGS = {
     "colors": {
         "purple": "#9f00ee",
         "purple2": "#9f00ee",
+        "reading": "#2aa9ff",
+        "meaning": "#ff5f96",
         "gray": "#e9e9e9",
         "good": "#83c700",
         "bad": "#ff0037",
@@ -60,7 +62,7 @@ def normalize_settings(raw: dict | None):
     }
     if isinstance(font, str):
         font = font_aliases.get(font, font)
-    if font in {"modern", "friendly", "book", "clean"}:
+    if font in {"modern", "friendly", "book", "clean", "noto"}:
         base["font"] = font
 
     return base
@@ -88,6 +90,8 @@ def template_theme_vars():
     return {
         "wk_purple": colors.get("purple", DEFAULT_UI_SETTINGS["colors"]["purple"]),
         "wk_purple2": colors.get("purple2", DEFAULT_UI_SETTINGS["colors"]["purple2"]),
+        "wk_reading": colors.get("reading", DEFAULT_UI_SETTINGS["colors"]["reading"]),
+        "wk_meaning": colors.get("meaning", DEFAULT_UI_SETTINGS["colors"]["meaning"]),
         "wk_gray": colors.get("gray", DEFAULT_UI_SETTINGS["colors"]["gray"]),
         "wk_good": colors.get("good", DEFAULT_UI_SETTINGS["colors"]["good"]),
         "wk_bad": colors.get("bad", DEFAULT_UI_SETTINGS["colors"]["bad"]),
@@ -297,6 +301,7 @@ def build_lesson_chunk(ids: list[int]):
             "cardId": cid,
             "front": payload.get("front", ""),
             "reading": payload.get("readingUI", "") or payload.get("reading", ""),
+            "readingKana": payload.get("reading", ""),
             "meanings": extract_meanings(payload.get("notes", "")),
         })
     return cards
