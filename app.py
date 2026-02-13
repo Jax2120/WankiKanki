@@ -1,10 +1,15 @@
 from flask import Flask, render_template, jsonify, request
 import requests, random, re, html
 from collections import deque
-import os, json
+import os, json, sys, time, threading, webbrowser
 
 ANKI_CONNECT_URL = "http://127.0.0.1:8765"
-SETTINGS_FILE = "settings.json"
+SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
+BUNDLE_DIR = getattr(sys, "_MEIPASS", SOURCE_DIR)
+RUNTIME_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else SOURCE_DIR
+SETTINGS_FILE = os.path.join(RUNTIME_DIR, "settings.json")
+TEMPLATE_DIR = os.path.join(BUNDLE_DIR, "templates")
+STATIC_DIR = os.path.join(BUNDLE_DIR, "static")
 DECK_NAME = "Japanese Review"
 REINSERT_MIN_INDEX = 4
 DEFAULT_MODE = "reviews"
@@ -21,7 +26,12 @@ DEFAULT_UI_SETTINGS = {
     "font": "modern",
 }
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=TEMPLATE_DIR,
+    static_folder=STATIC_DIR,
+    static_url_path="/static",
+)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 # ---- session state ----
@@ -131,14 +141,43 @@ def mode_card_ids(mode: str):
     ids = anki_request("findCards", {"query": f'deck:"{CURRENT_DECK_NAME}" {query_suffix}'})
     return ids or []
 
-def available_decks():
+def sorted_deck_names():
     decks = anki_request("deckNames")
     if not isinstance(decks, list):
-        return [CURRENT_DECK_NAME]
-    decks = sorted(decks)
-    if CURRENT_DECK_NAME not in decks:
-        decks.insert(0, CURRENT_DECK_NAME)
-    return decks
+        return []
+    clean = []
+    for d in decks:
+        if isinstance(d, str):
+            d = d.strip()
+            if d:
+                clean.append(d)
+    return sorted(clean)
+
+def choose_existing_deck(requested: str | None = None):
+    """
+    Prefer requested/current/default deck if it exists in Anki.
+    Otherwise fall back to the first available deck.
+    """
+    req = (requested or "").strip()
+    try:
+        decks = sorted_deck_names()
+        if not decks:
+            return req or CURRENT_DECK_NAME or DECK_NAME
+        if req and req in decks:
+            return req
+        if CURRENT_DECK_NAME in decks:
+            return CURRENT_DECK_NAME
+        if DECK_NAME in decks:
+            return DECK_NAME
+        return decks[0]
+    except Exception:
+        return req or CURRENT_DECK_NAME or DECK_NAME
+
+def available_decks():
+    decks = sorted_deck_names()
+    if decks:
+        return decks
+    return [CURRENT_DECK_NAME]
 
 
 # ---- reading extraction ----
@@ -188,7 +227,36 @@ def extract_meanings(notes_text: str):
     s = html.unescape(s)
     s = _BR_RE.sub("\n", s)
     s = _TAG_RE.sub("", s)
-    parts = re.split(r"[\n;,/•]\s*", s)
+    # Split by delimiters, but do not split commas inside parentheses.
+    parts = []
+    chunk = []
+    paren_depth = 0
+    for ch in s:
+        if ch == "(":
+            paren_depth += 1
+            chunk.append(ch)
+            continue
+        if ch == ")":
+            paren_depth = max(0, paren_depth - 1)
+            chunk.append(ch)
+            continue
+        if ch in {"\n", ";", "/", "•"}:
+            part = "".join(chunk).strip()
+            if part:
+                parts.append(part)
+            chunk = []
+            continue
+        if ch == "," and paren_depth == 0:
+            part = "".join(chunk).strip()
+            if part:
+                parts.append(part)
+            chunk = []
+            continue
+        chunk.append(ch)
+    tail = "".join(chunk).strip()
+    if tail:
+        parts.append(tail)
+
     out = []
     for p in parts:
         p = re.sub(r"\s+", " ", p.strip())
@@ -199,7 +267,8 @@ def extract_meanings(notes_text: str):
 def normalize_meaning(s: str) -> str:
     s = (s or "").strip().lower()
     s = html.unescape(s).replace("’", "'")
-    s = re.sub(r"\([^)]*\)", "", s)
+    s = s.replace("'", "")
+    s = s.replace("(", " ").replace(")", " ")
     s = re.sub(r"[^a-z0-9\s]", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
@@ -208,6 +277,8 @@ def canonical_meaning(s: str) -> str:
     s = normalize_meaning(s)
     if s.startswith("to "):
         s = s[3:].strip()
+    # Treat generic pronouns similarly for lightweight tolerance.
+    s = re.sub(r"\bone\b", "you", s)
     words = [w for w in s.split() if w not in {"a", "an", "the"}]
     return " ".join(words).strip()
 
@@ -358,7 +429,7 @@ def configure_session(mode: str | None = None, deck_name: str | None = None):
     new_mode = (mode or SESSION_MODE or DEFAULT_MODE).lower()
     if new_mode not in {"lessons", "reviews"}:
         new_mode = DEFAULT_MODE
-    new_deck = (deck_name or CURRENT_DECK_NAME or DECK_NAME).strip()
+    new_deck = choose_existing_deck(deck_name)
     changed = (new_mode != SESSION_MODE) or (new_deck != CURRENT_DECK_NAME)
     SESSION_MODE = new_mode
     CURRENT_DECK_NAME = new_deck
@@ -533,6 +604,7 @@ def reset_settings():
 @app.route("/api/splash")
 def splash_data():
     try:
+        configure_session()
         reviews_available = len(mode_card_ids("reviews"))
         lessons_available = len(mode_card_ids("lessons"))
         return jsonify({
@@ -734,5 +806,18 @@ def undo():
     except Exception as e:
         return api_error("/undo", e)
 
+def open_browser():
+    time.sleep(0.7)
+    webbrowser.open("http://127.0.0.1:5000")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("WaniKani Anki app is running at http://127.0.0.1:5000")
+    print("Keep this window open while using the app.")
+    threading.Thread(target=open_browser, daemon=True).start()
+    try:
+        from waitress import serve
+        serve(app, host="127.0.0.1", port=5000)
+    except Exception:
+        app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+

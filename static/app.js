@@ -182,7 +182,7 @@ function applyPromptUI(prompt) {
   currentPrompt = (prompt === "meaning") ? "meaning" : "reading";
   setPromptThemeClass(currentPrompt);
   mode.textContent = currentPrompt === "reading" ? "Reading" : "Meaning";
-  answer.placeholder = currentPrompt === "reading" ? "Your Response (kana)" : "Your Response";
+  answer.placeholder = currentPrompt === "reading" ? "答え" : "Your Response";
 }
 
 function setLessonStudyVisible(visible) {
